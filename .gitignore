@@ -1,0 +1,4 @@
+# bin フォルダはいらない
+bin/
+# testコードの除外
+src/test/
