@@ -29,7 +29,8 @@ public class FilesLinesTest {
 							Paths.get(".\\basicTestProg.bas"), StandardCharsets.UTF_8));
 			int1 = reader.read();
 			while(int1 != -1) {
-				System.out.print((char)int1);
+				if(int1 != 32 && int1 != 9)
+				System.out.print((char)int1 /*+ "" + int1*/);
 				int1 = reader.read();
 			}
 			
