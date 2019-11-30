@@ -32,7 +32,7 @@ public class LexicalUnit {
 	    case DOUBLEVAL:
 	    	return "DOUBLEVAL:\t" + value.getSValue();
 	    case INTVAL:
-	    	return "INTVAL:\t" + value.getSValue();
+	    	return "INT:\t" + value.getSValue();
 	    case IF:
             return ("IF");
 	    case THEN:
@@ -99,6 +99,7 @@ public class LexicalUnit {
 	    	return ("NE");
 	    case ENDIF:
 	    	return ("ENDIF");
+	    
 	    }
 	    return "";
 	}
