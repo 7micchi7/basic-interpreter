@@ -15,7 +15,7 @@ public class Main {
 		String filePath;
 		int stringCode;
 		char readChar;
-		Listt<LexicalUnit> unit;
+		List<LexicalUnit> unit;
 
 		if(args[0].equals(null)) filePath = ".\\BasicTestProg.bas";
 		else filePath = args[0];

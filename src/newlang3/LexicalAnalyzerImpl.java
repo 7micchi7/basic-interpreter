@@ -6,6 +6,10 @@ import java.util.HashMap;
 
 public class LexicalAnalyzerImpl implements LexicalAnalyzer{
 
+	private boolean intFlag = false;
+	private boolean doubleFlag = false;
+	private boolean stringFlag = false;
+
 	private PushbackReader reader;
 	private static LexicalUnit unit;
 	private static String unitStack;
@@ -35,6 +39,7 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer{
 		WORD_MAP.put("UNTIL", LexicalType.UNTIL);
 		WORD_MAP.put("LOOP", LexicalType.LOOP);
 		WORD_MAP.put("TO", LexicalType.TO);
+
 		WORD_MAP.put("WEND", LexicalType.WEND);
 		WORD_MAP.put("EOF", LexicalType.EOF);
 
@@ -64,23 +69,95 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer{
 	public LexicalUnit get() throws Exception {
 	
 		int stringCode;
+		char readChar;
+
+		stringCode = reader.read();
+
+		if(stringCode == -1) return new LexicalUnit(LexicalType.EOF);
+	
+		if(String.valueOf(stringCode).matches("[0-9.]")) {
+			reader.unread(stringCode);
+			unit = getString();
+		}
+
+		if(String.valueOf(stringCode).matches("\\d")) {
+			reader.unread(stringCode);
+			unit = getInt();
+		}
+
+		if(String.valueOf(stringCode).matches("\\d")) {
+			reader.unread(stringCode);
+			unit = getLiteral();
+		}
 		
-		while(true) {
-			stringCode = reader.read();
+		reader.unread(stringCode);
+		unit = getSymbol();
 
-			if(stringCode == -1) return new LexicalUnit(LexicalType.EOF);
+		if(unit == null) ;
+		
+		return unit;
+	}
 
-			//タブと空白はいらないので除外
-			if(stringCode != 32 && stringCode != 9) {
-				unit = findUnit(stringCode);
+	private LexicalUnit getSymbol() {
+		// TODO Auto-generated method stub
+		try {
+			while (true) {
+				int ci = reader.read();
+
+				if (ci < 0) break;
+			
 			}
 			
-			stringCode = reader.read();
-
-			if(unit == null) continue;
-			
-			return unit;
+		} catch (Exception e) {
+			// TODO: handle exception
 		}
+		return null;
+	}
+
+	private LexicalUnit getLiteral() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private LexicalUnit getInt() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private LexicalUnit getString() {
+		// TODO Auto-generated method stub
+		
+		String target = "";
+
+		try {
+			
+
+			while (true) {
+
+				int ci = reader.read();
+				char ch = (char)ci;
+				
+				if (String.valueOf(ci).matches("\\w")) {
+
+					target += ch;
+					continue;
+
+				}
+				
+				break;
+			}
+
+			if (WORD_MAP.containsKey(target)) {
+				return new LexicalUnit(WORD_MAP.get(target));
+			} else {
+				return new LexicalUnit(LexicalType.NAME, new ValueImpl(target));
+			}
+				
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+
+		return null;
 	}
 
 	@Override
@@ -96,14 +173,38 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer{
 	}
 	
 	private LexicalUnit findUnit(int stringCode) {
-		boolean intFlag = false;
 		
 		if(String.valueOf((char)stringCode).matches("[0-9.]") && unitStack.matches("[0-9.]*?")) {
-			intFlag = true;
-			if(unitStack.matches("\\d+[.]")) ;
-		}
 
-		unitStack += (char)stringCode;
+			if(unitStack.matches("\\d+[.]")) {
+
+				doubleFlag = true;
+				unitStack += (char)stringCode;
+				return null;
+
+			} else {
+
+				intFlag = true;
+				doubleFlag = false;
+				unitStack += (char)stringCode;
+				return null;
+
+			}
+
+		} else if(unitStack.matches("\\d+.")){
+
+			if (doubleFlag) {
+
+				return new LexicalUnit(LexicalType.DOUBLEVAL, new ValueImpl(Double.parseDouble(unitStack)));
+
+			} else if(intFlag) {
+
+				return new LexicalUnit(LexicalType.INTVAL, new ValueImpl(Integer.parseInt(unitStack)));
+
+			}	
+		}
+		
+		
 		
 		if(WORD_MAP.containsKey(unitStack)) {
 
