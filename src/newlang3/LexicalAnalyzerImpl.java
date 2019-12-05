@@ -1,22 +1,17 @@
 package newlang3;
 
 import java.io.PushbackReader;
-import java.lang.ProcessBuilder.Redirect;
 import java.util.HashMap;
 
 public class LexicalAnalyzerImpl implements LexicalAnalyzer{
 
+
 	private PushbackReader reader;
 	private static LexicalUnit unit;
-	private static String unitStack;
 	private static HashMap<String, LexicalType> WORD_MAP = new HashMap<String, LexicalType>();
-	private static HashMap<String, LexicalType> NEED_VALUE_WORD_MAP = new HashMap<String, LexicalType>();
+	private static HashMap<String, LexicalType> SYMBOL_MAP = new HashMap<String, LexicalType>();
 	
 	static {
-		NEED_VALUE_WORD_MAP.put("LITERAL", LexicalType.LITERAL);		//value必須
-		NEED_VALUE_WORD_MAP.put("INTVAL", LexicalType.INTVAL);			//value必須
-		NEED_VALUE_WORD_MAP.put("DOUBLEVAL", LexicalType.DOUBLEVAL);	//value必須
-		NEED_VALUE_WORD_MAP.put("NAME", LexicalType.NAME);				//value必須
 		WORD_MAP.put("IF", LexicalType.IF);
 		WORD_MAP.put("THEN", LexicalType.THEN);
 		WORD_MAP.put("ELSE", LexicalType.ELSE);
@@ -35,25 +30,27 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer{
 		WORD_MAP.put("UNTIL", LexicalType.UNTIL);
 		WORD_MAP.put("LOOP", LexicalType.LOOP);
 		WORD_MAP.put("TO", LexicalType.TO);
+
 		WORD_MAP.put("WEND", LexicalType.WEND);
 		WORD_MAP.put("EOF", LexicalType.EOF);
 
-		WORD_MAP.put("=", LexicalType.EQ);
-		WORD_MAP.put("<", LexicalType.LT);
-		WORD_MAP.put(">", LexicalType.GT);
-		WORD_MAP.put("<=", LexicalType.LE);
-		WORD_MAP.put("=<", LexicalType.LE);
-		WORD_MAP.put("=>", LexicalType.GE);
-		WORD_MAP.put(">=", LexicalType.GE);
-		WORD_MAP.put("<>", LexicalType.NE);
-		WORD_MAP.put(".", LexicalType.DOT);
-		WORD_MAP.put("+", LexicalType.ADD);
-		WORD_MAP.put("-", LexicalType.SUB);
-		WORD_MAP.put("*", LexicalType.MUL);
-		WORD_MAP.put("/", LexicalType.DIV);
-		WORD_MAP.put(")", LexicalType.LP);
-		WORD_MAP.put("(", LexicalType.RP);
-		WORD_MAP.put(",", LexicalType.COMMA);
+		SYMBOL_MAP.put("=", LexicalType.EQ);
+		SYMBOL_MAP.put("<", LexicalType.LT);
+		SYMBOL_MAP.put(">", LexicalType.GT);
+		SYMBOL_MAP.put("<=", LexicalType.LE);
+		SYMBOL_MAP.put("=<", LexicalType.LE);
+		SYMBOL_MAP.put("=>", LexicalType.GE);
+		SYMBOL_MAP.put(">=", LexicalType.GE);
+		SYMBOL_MAP.put("<>", LexicalType.NE);
+		SYMBOL_MAP.put(".", LexicalType.DOT);
+		SYMBOL_MAP.put("+", LexicalType.ADD);
+		SYMBOL_MAP.put("-", LexicalType.SUB);
+		SYMBOL_MAP.put("*", LexicalType.MUL);
+		SYMBOL_MAP.put("/", LexicalType.DIV);
+		SYMBOL_MAP.put(")", LexicalType.LP);
+		SYMBOL_MAP.put("(", LexicalType.RP);
+		SYMBOL_MAP.put(",", LexicalType.COMMA);
+		SYMBOL_MAP.put("\n", LexicalType.NL);
 	}
 
 	public LexicalAnalyzerImpl(PushbackReader reader) {
@@ -62,25 +59,190 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer{
 
 	@Override
 	public LexicalUnit get() throws Exception {
-	
-		int stringCode;
-		
 		while(true) {
-			stringCode = reader.read();
+			
+			int stringCode = reader.read();
+			char ch = (char)stringCode;
 
-			if(stringCode == -1) return new LexicalUnit(LexicalType.EOF);
 
-			//タブと空白はいらないので除外
-			if(stringCode != 32 && stringCode != 9) {
-				unit = findUnit(stringCode);
+			if(stringCode < 0) return new LexicalUnit(LexicalType.EOF);
+	
+			if(String.valueOf(ch).matches("[a-zA-Z]")) {
+				reader.unread(stringCode);
+				unit = getString();
+				return unit;
+			}
+	
+			if(String.valueOf(ch).matches("[0-9.]")) {
+				reader.unread(stringCode);
+				unit = getInt();
+				return unit;
+			}
+	
+			if(String.valueOf(ch).matches("\"")) {
+				reader.unread(stringCode);
+				unit = getLiteral();
+				return unit;
+			}
+		
+			if(SYMBOL_MAP.containsKey(ch + "")) {
+				reader.unread(stringCode);
+				unit = getSymbol();
+				return unit;
+			}
+		}
+	}
+
+	private LexicalUnit getSymbol() {
+		// TODO Auto-generated method stub
+		String target = "";
+		try {
+			while (true) 	{
+				int ci = reader.read();
+
+				if (ci < 0) return new LexicalUnit(SYMBOL_MAP.get(target));
+				
+				char ch = (char)ci;
+				
+				if(SYMBOL_MAP.containsKey(target + ch)) {
+					target += ch;
+				} else {
+					reader.unread(ci);
+					return new LexicalUnit(SYMBOL_MAP.get(target));
+				}
+			
 			}
 			
-			stringCode = reader.read();
-
-			if(unit == null) continue;
-			
-			return unit;
+		} catch (Exception e) {
+			// TODO: handle exception
 		}
+		return null;
+	}
+
+	private LexicalUnit getLiteral() {
+		// TODO Auto-generated method stub
+		String target = "";
+		boolean startFlag = false;
+		boolean endFlag = false;
+		boolean escapeFlag = false;
+
+		try {
+			while(true) {
+				int ci = reader.read();
+				char ch = (char)ci;
+			
+				if(ch == '\\') {
+					escapeFlag = !escapeFlag;
+					ci = reader.read();
+					ch = (char)ci;
+				}
+
+				if(ch == '\"' && escapeFlag == false) {
+
+					if(startFlag == false) {
+						startFlag = true;
+						continue;
+					} else if(endFlag == false) {
+						endFlag = true;
+						continue;
+					}
+
+				}
+				
+				if(endFlag == true) {
+					break;
+				}
+				
+				target += ch;
+			}
+			
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return new LexicalUnit(LexicalType.LITERAL, new ValueImpl(target));
+	}
+
+	private LexicalUnit getInt() {
+		// TODO Auto-generated method stub
+		String target = "";
+		boolean doubleFlag = false;
+		
+		try {
+			while(true) {
+				int ci = reader.read();
+				char ch = (char)ci;
+				
+				if(String.valueOf(ch).matches("[\\d\\.]")) {
+					if(ch == '.' && doubleFlag == false) {
+						doubleFlag = true;
+					}
+					
+					target += ch;
+					continue;
+				}
+				
+				reader.unread(ci);
+				break;
+			}
+			
+			if(doubleFlag) {
+				return new LexicalUnit(LexicalType.DOUBLEVAL, new ValueImpl(Double.parseDouble(target)));
+			} else {
+				return new LexicalUnit(LexicalType.INTVAL, new ValueImpl(Integer.parseInt(target)));
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return null;
+	}
+
+	private LexicalUnit getString() {
+		// TODO Auto-generated method stub
+		
+		String target = "";
+
+		try {
+			
+			while (true) {
+
+				int ci = reader.read();
+				char ch = (char)ci;
+				
+				if (String.valueOf(ch).matches("[a-zA-Z]")) {
+
+					target += ch;
+					continue;
+
+				}
+				
+				reader.unread(ci);
+				
+				break;
+			}
+			
+			if(WORD_MAP.containsKey(target)) {
+				return new LexicalUnit(WORD_MAP.get(target));
+			} else {
+				return new LexicalUnit(LexicalType.NAME, new ValueImpl(target));
+			}
+
+				
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+
+		if (WORD_MAP.containsKey(target)) {
+
+			return new LexicalUnit(WORD_MAP.get(target));
+
+		} else {
+
+			return new LexicalUnit(LexicalType.NAME, new ValueImpl(target));
+
+		}
+
 	}
 
 	@Override
@@ -95,26 +257,4 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer{
 		
 	}
 	
-	private LexicalUnit findUnit(int stringCode) {
-		boolean intFlag = false;
-		
-		if(String.valueOf((char)stringCode).matches("[0-9.]") && unitStack.matches("[0-9.]*?")) {
-			intFlag = true;
-			if(unitStack.matches("\\d+[.]")) ;
-		}
-
-		unitStack += (char)stringCode;
-		
-		if(WORD_MAP.containsKey(unitStack)) {
-
-			return new LexicalUnit(WORD_MAP.get(unitStack));
-			
-		} else if(NEED_VALUE_WORD_MAP.containsKey(unitStack)) {
-
-			return new LexicalUnit(NEED_VALUE_WORD_MAP.get(unitStack),);
-			
-		}
-		return null;
-	}
-
 }
