@@ -1,10 +1,6 @@
 package newlang3;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
 import java.io.PushbackReader;
-import java.io.UTFDataFormatException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
