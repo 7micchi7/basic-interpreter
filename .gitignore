@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-bin
-=======
 # bin フォルダはいらない
 bin/
 # testコードの除外
 src/test/
->>>>>>> 08eab6962dfa0c14311d9718c3b821c920bc0d29
