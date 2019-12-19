@@ -2,6 +2,7 @@ package newlang3;
 
 import java.io.PushbackReader;
 import java.util.HashMap;
+import java.util.Stack;
 
 public class LexicalAnalyzerImpl implements LexicalAnalyzer{
 
@@ -10,6 +11,7 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer{
 	private static LexicalUnit unit;
 	private static HashMap<String, LexicalType> WORD_MAP = new HashMap<String, LexicalType>();
 	private static HashMap<String, LexicalType> SYMBOL_MAP = new HashMap<String, LexicalType>();
+	private static Stack<LexicalUnit> buff = new Stack<LexicalUnit>();
 	
 	static {
 		WORD_MAP.put("IF", LexicalType.IF);
@@ -61,11 +63,17 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer{
 	public LexicalUnit get() throws Exception {
 		while(true) {
 			
+			if(!buff.empty()) {
+				
+				return buff.pop();
+
+			}
+			
 			int stringCode = reader.read();
 			char ch = (char)stringCode;
 
 
-			if(stringCode < 0) return new LexicalUnit(LexicalType.EOF);
+			if(stringCode < 0 || stringCode == 0xffff ) return new LexicalUnit(LexicalType.EOF);
 	
 			if(String.valueOf(ch).matches("[a-zA-Z]")) {
 				reader.unread(stringCode);
@@ -255,6 +263,8 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer{
 	public void unget(LexicalUnit token) throws Exception {
 		// TODO Auto-generated method stub
 		
+		buff.push(token);
+
 	}
 	
 }
