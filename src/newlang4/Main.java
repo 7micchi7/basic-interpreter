@@ -6,7 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import newlang3.LexicalAnalyzerImpl;
+import newlang4.LexicalAnalyzerImpl;
 import newlang4.nodes.Program;
 
 public class Main {
@@ -17,10 +17,9 @@ public class Main {
 	public static void main(String[] args) throws Exception {
 
 		String filePath = ".\\BasicTestProg.bas";
-		LexicalAnalyzer lex;
+		LexicalAnalyzerImpl lex;
 		LexicalUnit		first;
 		Environment		env;
-		Node			program;
 
 		try(PushbackReader reader = new PushbackReader(
 				Files.newBufferedReader(Paths.get(filePath), StandardCharsets.UTF_8))) {
@@ -28,18 +27,19 @@ public class Main {
 			System.out.println("basic parser");
 			lex = new LexicalAnalyzerImpl(reader);
 			env = new Environment(lex);
-			first = lex.get();
+			first = lex.peek();
 
-			if (Programtest.isFirst(first)) {
+			if (Program.isFirst(first)) {
 				Node handler = Program.getHandler(first, env);
 				handler.parse();
-				System.out.println(program);
-				System.out.println("value = " + program.getValue());
+				System.out.println(handler.toString());
+//				System.out.println("value = " + Program.getValue());
 			}
 			else System.out.println("syntax error");
 
 		} catch (Exception e) {
 			// TODO: handle exception
+			e.printStackTrace();
 		}
 	}
 

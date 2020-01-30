@@ -1,6 +1,8 @@
 package newlang4.nodes;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -13,7 +15,7 @@ import newlang4.NodeType;
 
 public class Block extends Node {
 
-	List<Node> nodeList = new ArrayList<>();
+	private static Deque<Node> child = new ArrayDeque<Node>();
 	
 	static final Set<LexicalType> firstSet = EnumSet.of(
 
@@ -38,7 +40,7 @@ public class Block extends Node {
 	private Block(Environment env) {
 		
 		this.env = env;
-		this.type = NodeType.END;
+		this.type = NodeType.BLOCK;
 		
 	}
 	
@@ -46,31 +48,29 @@ public class Block extends Node {
 	public boolean parse() throws Exception {
 		// TODO Auto-generated method stub
 		
-		LexicalUnit first = env.getInput().get();
+		LexicalUnit first = env.getInput().peek();
 		
-		while(true) {
-			
-			Node handler;
-			
-			if (IfBlock.isFirst) {
-				
-				handler = IfBlock.getHander(first, env);
-				
-			} else if (Loop.isFirst) {
-				
-				handler = Loop.getHander(first, env);
-				
-			} else {
+		Node handler = null;
 
-				break;
-
-			}
+		if (IfBlock.isFirst(first)) {
+			
+			handler = IfBlock.getHandler(first, env);
+			
+		} else if (LoopBlock.isFirst(first)) {
+			
+			handler = LoopBlock.getHandler(first, env);
+			
 		}
-		
-		handler.parse();
-		nodeList.add(handler);
 
+		handler.parse();
+		child.addFirst(handler);
+
+		return true;
 	}
-	
-	return true;
+
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		return child.removeLast().toString();
+	}
 }

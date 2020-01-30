@@ -36,17 +36,18 @@ public class End extends Node{
 
 	@Override
 	public boolean parse() throws Exception {
-		// TODO Auto-generated method stub
 		
 		LexicalUnit first = env.getInput().get();
 
-		//　ENDじゃないのはおかしいよね処理
 		if(!End.isFirst(first)) {
-			// error出力？だよね
 		}
 		
 		return true;
 
 	}
 
+	@Override
+	public String toString() {
+		return "END";
+	}
 }

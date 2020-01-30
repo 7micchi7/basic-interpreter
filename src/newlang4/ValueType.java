@@ -6,4 +6,8 @@ public enum ValueType {
 	STRING,
 	DOUBLE,
 	BOOL,
+	ADD,
+	SUB,
+	MUL,
+	DIV,
 }

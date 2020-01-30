@@ -3,6 +3,7 @@ package newlang4;
 public class Node {
     protected NodeType type;
     protected Environment env;
+    protected Value value;
 
     /** Creates a new instance of Node */
     public Node() {
@@ -23,7 +24,7 @@ public class Node {
     }
     
     public Value getValue() throws Exception {
-        return null;
+        return value;
     }
  
     public String toString() {
